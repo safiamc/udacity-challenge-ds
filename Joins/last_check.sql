@@ -36,3 +36,50 @@ ON r.id = s.region_id AND r.name = 'Midwest' AND s.name LIKE '% K%'
 JOIN accounts a
 ON a.sales_rep_id=s.id
 ORDER BY a.name
+
+/* Provide the name for each region for every order, as well as the account name and the unit price they paid (total_amt_usd/total) for the order.
+However, you should only provide the results if the standard order quantity exceeds 100.
+Your final table should have 3 columns: region name, account name, and unit price.
+In order to avoid a division by zero error, adding .01 to the denominator here is helpful total_amt_usd/(total+0.01). 
+*/
+SELECT r.name "Region", a.name "Account", o.total_amt_usd/NULLIF(o.total,0) "Unit Price"
+FROM region r
+JOIN sales_reps s
+ON r.id = s.region_id
+JOIN accounts a
+ON a.sales_rep_id=s.id
+JOIN orders o
+ON o.account_id = a.id AND o.standard_qty >100
+
+/* Provide the name for each region for every order, as well as the account name and the unit price they paid (total_amt_usd/total) for the order.
+However, you should only provide the results if the standard order quantity exceeds 100 and the poster order quantity exceeds 50.
+Your final table should have 3 columns: region name, account name, and unit price.
+Sort for the smallest unit price first.
+In order to avoid a division by zero error, adding .01 to the denominator here is helpful (total_amt_usd/(total+0.01). 
+*/
+SELECT r.name "Region", a.name "Account", o.total_amt_usd/NULLIF(o.total,0) "Unit Price"
+FROM region r
+JOIN sales_reps s
+ON r.id = s.region_id
+JOIN accounts a
+ON a.sales_rep_id=s.id
+JOIN orders o
+ON o.account_id = a.id AND o.standard_qty >100 AND o.poster_qty > 50
+ORDER BY "Unit Price"
+
+/* What are the different channels used by account id 1001? Your final table should have only 2 columns: account name and the different channels.
+You can try SELECT DISTINCT to narrow down the results to only the unique values.
+*/
+SELECT DISTINCT a.name "Account", w.channel "Channel"
+FROM web_events w
+JOIN accounts a
+ON w.account_id = a.id AND a.id = 1001
+
+/* Find all the orders that occurred in 2015.
+Your final table should have 4 columns: occurred_at, account name, order total, and order total_amt_usd.
+*/
+SELECT o.occurred_at, a.name "account_name", o.total, o.total_amt_usd
+FROM orders o
+JOIN accounts a
+ON o.account_id = a.id AND o.occurred_at BETWEEN '2015-01-01' AND '2016-01-01'
+
