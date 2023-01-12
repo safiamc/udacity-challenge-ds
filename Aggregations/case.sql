@@ -39,7 +39,14 @@ ORDER BY 2 DESC
 /* We would like to identify top-performing sales reps, which are sales reps associated with more than 200 orders.
 Create a table with the sales rep name, the total number of orders, and a column with top or not depending on if they have more than 200 orders.
 Place the top salespeople first in your final table. */
-
+SELECT s.name sales_rep_name, COUNT(*) total_orders,
+CASE WHEN COUNT(*)>200 THEN 'Top'
+ELSE 'Not' END AS performance
+FROM orders o 
+JOIN accounts a ON o.account_id = a.id
+JOIN sales_reps s ON a.sales_rep_id = s.id
+GROUP BY s.name
+ORDER BY 2 DESC
 /* The previous didn't account for the middle, nor the dollar amount associated with the sales.
 Management decides they want to see these characteristics represented as well.
 We would like to identify top-performing sales reps, which are sales reps associated with more than 200 orders or more than 750000 in total sales.
@@ -47,3 +54,12 @@ The middle group has any rep with more than 150 orders or 500000 in sales.
 Create a table with the sales rep name, the total number of orders, total sales across all orders, and a column with top, middle, or low depending on these criteria.
 Place the top salespeople based on the dollar amount of sales first in your final table.
 You might see a few upset salespeople by this criteria! */
+SELECT s.name sales_rep_name, COUNT(*) total_orders, SUM(o.total_amt_usd) total_sales,
+CASE WHEN COUNT(o.*)>200 OR SUM(o.total_amt_usd)>750000 THEN 'Top'
+WHEN COUNT(o.*)>150 OR SUM(o.total_amt_usd)>500000 THEN 'Middle'
+ELSE 'Low' END AS performance
+FROM orders o 
+JOIN accounts a ON o.account_id = a.id
+JOIN sales_reps s ON a.sales_rep_id = s.id
+GROUP BY s.name
+ORDER BY 3 DESC
