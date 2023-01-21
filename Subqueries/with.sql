@@ -41,14 +41,47 @@ WITH sq AS (SELECT SUM(o.standard_qty) standard_sum, SUM(o.total_amt_usd) total_
 			GROUP BY a.name
 			ORDER BY 1 DESC
 			LIMIT 1),
-    cost AS (SELECT standard_sum
-             FROM sq),
     high_accounts AS (SELECT a.name, SUM(o.total_amt_usd)
 	FROM accounts a
 	JOIN orders o ON o.account_id = a.id
 	GROUP BY a.name
-	HAVING SUM(o.total_amt_usd) > (SELECT * FROM cost))
+	HAVING SUM(o.total_amt_usd) > (SELECT standard_sum FROM sq))
 SELECT COUNT(*)
 FROM high_accounts
-
-   
+/* For the customer that spent the most (in total over their lifetime as a customer) total_amt_usd, how many web_events did they have for each channel? */
+WITH high_cust AS (SELECT a.name, SUM(o.total_amt_usd)
+		FROM orders o
+		JOIN accounts a ON a.id = o.account_id
+		GROUP BY a.name
+		ORDER BY 2 DESC
+		LIMIT 1)
+SELECT a.name, w.channel, COUNT(*)
+FROM web_events w
+JOIN accounts a ON w.account_id=a.id
+WHERE a.name = (SELECT name FROM high_cust)
+GROUP BY a.name, w.channel
+/* What is the lifetime average amount spent in terms of total_amt_usd for the top 10 total spending accounts? */
+WITH top_10 AS (SELECT a.name, SUM(o.total_amt_usd)
+	FROM accounts a
+	JOIN orders o ON a.id=o.account_id
+	GROUP BY a.name
+	ORDER BY 2 DESC
+	LIMIT 10)
+SELECT AVG(sum)
+FROM top_10
+/* What is the lifetime average amount spent in terms of total_amt_usd, including only the companies that spent more per order, on average, than the average of all orders? */
+WITH above_avg AS (SELECT a.name, AVG(o.total_amt_usd) AS order_avg
+                   FROM orders o
+                   JOIN accounts a ON o.account_id = a.id
+                   GROUP BY a.name
+                   HAVING AVG(o.total_amt_usd) > 
+                   (SELECT AVG(o.total_amt_usd) 
+                    FROM orders o)
+                  ),
+     lifetime AS (SELECT a.name, SUM(o.total_amt_usd)
+                  FROM accounts a
+                  JOIN orders o ON o.account_id = a.id
+                  JOIN above_avg aa ON a.name=aa.name
+                  GROUP BY a.name)
+SELECT AVG(sum)
+FROM lifetime
