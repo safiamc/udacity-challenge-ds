@@ -19,8 +19,30 @@ JOIN (SELECT region, MAX(total_sales)
       GROUP BY region) T2 ON T2.region=T3.region
 WHERE T2.max = T3.total_sales
 /* For the region with the largest (sum) of sales total_amt_usd, how many total (count) orders were placed? */
-
+SELECT r.name, COUNT(o.id) order_count, SUM(o.total_amt_usd) sales_sum
+FROM orders o
+JOIN accounts a ON a.id=o.account_id
+JOIN sales_reps s ON s.id=a.sales_rep_id
+JOIN region r ON r.id = s.region_id
+GROUP BY r.name
+ORDER BY 3 DESC
+LIMIT 1
 /* How many accounts had more total purchases than the account name which has bought the most standard_qty paper throughout their lifetime as a customer? */
+SELECT COUNT(*)
+FROM (SELECT a.name, COUNT(*)
+	FROM accounts a
+	JOIN orders o ON o.account_id = a.id
+	GROUP BY a.name
+	HAVING COUNT(*) >
+		(SELECT count
+		FROM
+			(SELECT SUM(o.standard_qty), COUNT(o.id)
+			FROM accounts a
+			JOIN orders o on o.account_id=a.id
+			GROUP BY a.name
+			ORDER BY sum DESC
+			LIMIT 1) T1)
+        ) T2
 /* For the customer that spent the most (in total over their lifetime as a customer) total_amt_usd, how many web_events did they have for each channel? */
 /* What is the lifetime average amount spent in terms of total_amt_usd for the top 10 total spending accounts? */
 /* What is the lifetime average amount spent in terms of total_amt_usd, including only the companies that spent more per order, on average, than the average of all orders? */
