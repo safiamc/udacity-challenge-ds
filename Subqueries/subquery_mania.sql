@@ -67,15 +67,15 @@ ORDER BY 2 DESC
 LIMIT 10) T1
 /* What is the lifetime average amount spent in terms of total_amt_usd, including only the companies that spent more per order, on average, than the average of all orders? */
 SELECT AVG(sum)
-FROM (SELECT a.name, SUM(o.total_amt_usd)
-FROM orders o
-JOIN accounts a ON a.id=o.account_id
-JOIN (SELECT a.name, AVG(o.total_amt_usd) AS order_avg
-FROM accounts a
-JOIN orders o ON o.account_id=a.id
-GROUP BY a.name
-HAVING AVG(o.total_amt_usd) > 
-(SELECT AVG(o.total_amt_usd)
-FROM orders o)
-ORDER BY order_avg DESC) T1 ON T1.name=a.name
-GROUP BY a.name) T2
+FROM   (SELECT a.name, SUM(o.total_amt_usd)
+	FROM orders o
+	JOIN accounts a ON a.id=o.account_id
+	JOIN (SELECT a.name, AVG(o.total_amt_usd) AS order_avg
+	      FROM accounts a
+	      JOIN orders o ON o.account_id=a.id
+	      GROUP BY a.name
+	      HAVING AVG(o.total_amt_usd) > 
+			(SELECT AVG(o.total_amt_usd)
+			 FROM orders o)
+	      ORDER BY order_avg DESC) T1 ON T1.name=a.name
+	GROUP BY a.name) T2
