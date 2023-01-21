@@ -33,7 +33,22 @@ JOIN sales_reps s ON s.id=a.sales_rep_id
 JOIN region r ON r.id = s.region_id
 GROUP BY r.name
 HAVING SUM(o.total_amt_usd) = (SELECT * FROM top_region)
-/* This is much more complicated than it needs to be! This can be done without subqueries at all! */
-
+/* This is much more complicated than it needs to be! This can be done without subqueries at all!
+How many accounts had more total purchases than the account name which has bought the most standard_qty paper throughout their lifetime as a customer? */
+WITH sq AS (SELECT SUM(o.standard_qty) standard_sum, SUM(o.total_amt_usd) total_cost
+			FROM accounts a
+			JOIN orders o on o.account_id=a.id
+			GROUP BY a.name
+			ORDER BY 1 DESC
+			LIMIT 1),
+    cost AS (SELECT standard_sum
+             FROM sq),
+    high_accounts AS (SELECT a.name, SUM(o.total_amt_usd)
+	FROM accounts a
+	JOIN orders o ON o.account_id = a.id
+	GROUP BY a.name
+	HAVING SUM(o.total_amt_usd) > (SELECT * FROM cost))
+SELECT COUNT(*)
+FROM high_accounts
 
    
